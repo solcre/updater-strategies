@@ -1,0 +1,13 @@
+{
+    "name": "solcre/updater-strategies",
+    "description": "Updaters strategies for ApisUy",
+    "require": {
+        "php": ">=5.3.0"
+    },
+    "autoload": {
+        "psr-0": {
+            "Solcre\\UpdatersStrategies": "src/"
+        }
+
+    }
+}
