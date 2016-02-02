@@ -17,7 +17,24 @@ class BrouUpdaterStrategy implements SourceUpdaterInterface {
     public function update() {
 
         $site = $this->getSiteString($this->source_url);
+        return $this->parser($site);
+    }
 
+    private function getSiteString($url, Array $opts = array()) {
+        $rs = \curl_init();
+        curl_setopt($rs, CURLOPT_URL, $url);
+        curl_setopt($rs, CURLOPT_RETURNTRANSFER, true);
+        if (count($opts)) {
+            foreach ($opts as $opt) {
+                curl_setopt($rs, $opt['option'], $opt['value']);
+            }
+        }
+        $page = curl_exec($rs);
+        curl_close($rs);
+        return $page;
+    }
+
+    private function parser($site) {
         $data = array();
         if (preg_match_all('/(<td class="buy">)(.*)(<\/td>)/', $site, $compras) == 15 && preg_match_all('/(<td class="sale">)(.*)(<\/td>)/', $site, $ventas) == 15) {
 
@@ -35,20 +52,6 @@ class BrouUpdaterStrategy implements SourceUpdaterInterface {
         }
 
         return $data;
-    }
-
-    private function getSiteString($url, Array $opts = array()) {
-        $rs = \curl_init();
-        curl_setopt($rs, CURLOPT_URL, $url);
-        curl_setopt($rs, CURLOPT_RETURNTRANSFER, true);
-        if (count($opts)) {
-            foreach ($opts as $opt) {
-                curl_setopt($rs, $opt['option'], $opt['value']);
-            }
-        }
-        $page = curl_exec($rs);
-        curl_close($rs);
-        return $page;
     }
 
 }

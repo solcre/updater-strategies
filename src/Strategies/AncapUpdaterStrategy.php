@@ -16,22 +16,8 @@ class AncapUpdaterStrategy implements SourceUpdaterInterface {
 
     public function update() {
 
-        $file1 = $this->source_url;
-        $lines = file($file1);
-        $data = array();
-
-        foreach ($lines as $line) {
-
-            $fuel_type = $this->get_string_between($line);
-            $value = substr($line, strpos($line, "=") + 1);
-            if (!empty($fuel_type)) {
-                $data[$fuel_type] = trim($value);
-            }
-        }
-        $data["supergas"] = $this->getGasPrice();
-        $data["source"] = $this->source_id;
-
-        return $data;
+        $lines = $this->getFileFromUrl();
+        return $this->parser($lines);
     }
 
     private function get_string_between($string) {
@@ -39,6 +25,12 @@ class AncapUpdaterStrategy implements SourceUpdaterInterface {
         if ($find == 1) {
             return trim($output[1]);
         }
+    }
+    
+    private function getFileFromUrl(){
+        $file = $this->source_url;
+        $lines = file($file);
+        return $lines;
     }
 
     private function getGasPrice() {
@@ -65,6 +57,23 @@ class AncapUpdaterStrategy implements SourceUpdaterInterface {
         $page = curl_exec($rs);
         curl_close($rs);
         return $page;
+    }
+
+    private function parser($lines) {
+        $data = array();
+
+        foreach ($lines as $line) {
+
+            $fuel_type = $this->get_string_between($line);
+            $value = substr($line, strpos($line, "=") + 1);
+            if (!empty($fuel_type)) {
+                $data[$fuel_type] = trim($value);
+            }
+        }
+        $data["supergas"] = $this->getGasPrice();
+        $data["source"] = $this->source_id;
+
+        return $data;
     }
 
 }
