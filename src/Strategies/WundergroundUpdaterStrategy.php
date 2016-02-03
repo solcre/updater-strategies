@@ -15,56 +15,17 @@ class WundergroundUpdaterStrategy implements SourceUpdaterInterface {
     }
 
     public function update() {
-        $query_url = $this->source_url;
-        $json_string = file_get_contents($query_url);
-        $parsed_json = json_decode($json_string, true);
 
-        $condicion = $parsed_json['current_observation']['weather'];
-        $ciudad = $parsed_json['location']['city'];
-        $temperatura = $parsed_json['current_observation']['temp_c'];
-        $minima = $parsed_json['forecast']['simpleforecast']['forecastday'][0]['low']['celsius'];
-        $maxima = $parsed_json['forecast']['simpleforecast']['forecastday'][0]['high']['celsius'];
-        $humedad = $parsed_json['current_observation']['relative_humidity'];
-        $codigo = $this->getCodigo($condicion);
-        $actual = array(
-            'condicion' => $condicion,
-            'temperatura' => $temperatura,
-            'humedad' => $humedad,
-            'codigo_condicion' => $codigo,
-            'minima' => $minima,
-            'maxima' => $maxima
-        );
-        $pronostico = array();
-        $largo = count($parsed_json['forecast']['simpleforecast']['forecastday']);
-        for ($i = 1; $i < $largo; $i++) {
-            $condicion = $parsed_json['forecast']['simpleforecast']['forecastday'][$i]['conditions'];
-            $minima = $parsed_json['forecast']['simpleforecast']['forecastday'][$i]['low']['celsius'];
-            $maxima = $parsed_json['forecast']['simpleforecast']['forecastday'][$i]['high']['celsius'];
-            $codigo = $this->getCodigo($condicion);
-            $pronostico[] = array(
-                'condicion' => $condicion,
-                'codigo_condicion' => $codigo,
-                'minima' => $minima,
-                'maxima' => $maxima
-            );
-        }
-        $respuesta = array(
-            'actual' => $actual,
-            'pronostico' => $pronostico,
-        );
+        $json_string = $this->getSiteString();
+        return $this->parser($json_string);
+    }
 
-        $data = array(
-            "city" => $ciudad,
-            "data" => $respuesta,
-            "source" => $this->source_id
-        );
-
-
-        return $data;
+    private function getSiteString() {
+        return file_get_contents($this->source_url);
     }
 
     private function getCodigo($condicion) {
-        $retorno = 0;
+
         $condiciones = array(
             "PARTLY SUNNY",
             "SCATTERED THUNDERSTORMS",
@@ -105,6 +66,53 @@ class WundergroundUpdaterStrategy implements SourceUpdaterInterface {
         );
         $codigos = array_flip($condiciones);
         return $codigos[strtoupper($condicion)];
+    }
+
+    private function parser($json_string) {
+
+        $parsed_json = json_decode($json_string, true);
+        $condicion = $parsed_json['current_observation']['weather'];
+        $ciudad = $parsed_json['location']['city'];
+        $temperatura = $parsed_json['current_observation']['temp_c'];
+        $minima = $parsed_json['forecast']['simpleforecast']['forecastday'][0]['low']['celsius'];
+        $maxima = $parsed_json['forecast']['simpleforecast']['forecastday'][0]['high']['celsius'];
+        $humedad = $parsed_json['current_observation']['relative_humidity'];
+
+        $codigo = $this->getCodigo($condicion);
+        $actual = array(
+            'condicion' => $condicion,
+            'temperatura' => $temperatura,
+            'humedad' => $humedad,
+            'codigo_condicion' => $codigo,
+            'minima' => $minima,
+            'maxima' => $maxima
+        );
+        $pronostico = array();
+        $largo = count($parsed_json['forecast']['simpleforecast']['forecastday']);
+        for ($i = 1; $i < $largo; $i++) {
+            $condicion = $parsed_json['forecast']['simpleforecast']['forecastday'][$i]['conditions'];
+            $minima = $parsed_json['forecast']['simpleforecast']['forecastday'][$i]['low']['celsius'];
+            $maxima = $parsed_json['forecast']['simpleforecast']['forecastday'][$i]['high']['celsius'];
+            $codigo = $this->getCodigo($condicion);
+            $pronostico[] = array(
+                'condicion' => $condicion,
+                'codigo_condicion' => $codigo,
+                'minima' => $minima,
+                'maxima' => $maxima
+            );
+        }
+        $respuesta = array(
+            'actual' => $actual,
+            'pronostico' => $pronostico,
+        );
+
+        $data = array(
+            "city" => $ciudad,
+            "data" => $respuesta,
+            "source" => $this->source_id
+        );
+
+        return $data;
     }
 
 }
